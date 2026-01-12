@@ -1,4 +1,4 @@
-import { BaseProvider, ProviderConfig, ProviderError } from './base';
+import { BaseProvider, ProviderConfig, ProviderError, GenerateOptions } from './base';
 
 export class GeminiProvider extends BaseProvider {
     readonly name = 'gemini';
@@ -8,19 +8,20 @@ export class GeminiProvider extends BaseProvider {
         super({
             ...config,
             baseUrl: config.baseUrl || 'https://generativelanguage.googleapis.com/v1beta',
-            model: config.model || 'gemini-pro',
             temperature: config.temperature ?? 0.7,
             maxTokens: config.maxTokens ?? 500
         });
     }
     
-    async generate(prompt: string): Promise<string> {
+    async generate(prompt: string, options?: GenerateOptions): Promise<string> {
         this.validateApiKey();
+        this.validateModel();
         
         const response = await fetch(
             `${this.config.baseUrl}/models/${this.config.model}:generateContent?key=${this.config.apiKey}`,
             {
                 method: 'POST',
+                signal: options?.signal,
                 headers: {
                     'Content-Type': 'application/json'
                 },

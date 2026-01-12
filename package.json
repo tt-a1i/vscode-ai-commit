@@ -96,8 +96,8 @@
         },
         "gitMessage.providers.openai.model": {
           "type": "string",
-          "default": "gpt-4o",
-          "description": "OpenAI model to use"
+          "default": "",
+          "description": "OpenAI model to use (required)"
         },
         "gitMessage.providers.openai.baseUrl": {
           "type": "string",
@@ -106,13 +106,23 @@
         },
         "gitMessage.providers.claude.model": {
           "type": "string",
-          "default": "claude-3-5-sonnet-20241022",
-          "description": "Claude model to use"
+          "default": "",
+          "description": "Claude model to use (required)"
+        },
+        "gitMessage.providers.claude.baseUrl": {
+          "type": "string",
+          "default": "https://api.anthropic.com",
+          "description": "Claude API base URL"
         },
         "gitMessage.providers.gemini.model": {
           "type": "string",
-          "default": "gemini-pro",
-          "description": "Gemini model to use"
+          "default": "",
+          "description": "Gemini model to use (required)"
+        },
+        "gitMessage.providers.gemini.baseUrl": {
+          "type": "string",
+          "default": "https://generativelanguage.googleapis.com/v1beta",
+          "description": "Gemini API base URL"
         },
         "gitMessage.providers.custom.model": {
           "type": "string",
@@ -128,6 +138,16 @@
           "type": "number",
           "default": 4000,
           "description": "Maximum diff length to include in prompt (characters)"
+        },
+        "gitMessage.debug": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable debug logging to the Git Message Generator output channel"
+        },
+        "gitMessage.debugLogPrompt": {
+          "type": "boolean",
+          "default": false,
+          "description": "Log full prompt content in debug mode (may include sensitive code)"
         }
       }
     }

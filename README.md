@@ -27,6 +27,10 @@ Run command: `Git Message: Set API Key`
 - `gitMessage.defaultProvider`: Choose AI provider (openai/claude/gemini/custom)
 - `gitMessage.language`: Output language (en/zh-CN/zh-TW/ja/ko)
 - `gitMessage.customPrompt`: Custom prompt template
+- `gitMessage.providers.<provider>.model`: Model name (required; no default)
+- `gitMessage.providers.<provider>.baseUrl`: Provider API base URL (optional; override for proxies/ports)
+- `gitMessage.debug`: Enable debug logging (Output: "Git Message Generator")
+- `gitMessage.debugLogPrompt`: Log full prompt content (may include sensitive code)
 
 ### Prompt Variables
 

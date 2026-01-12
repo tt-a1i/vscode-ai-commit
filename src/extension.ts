@@ -3,9 +3,12 @@ import { generateCommitMessage } from './commands/generateCommit';
 import { setApiKey } from './commands/setApiKey';
 import { switchProvider } from './commands/switchProvider';
 import { switchLanguage } from './commands/switchLanguage';
+import { getOutputChannel } from './utils/log';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Git Message Generator is now active!');
+
+    context.subscriptions.push(getOutputChannel());
 
     // Register commands
     context.subscriptions.push(

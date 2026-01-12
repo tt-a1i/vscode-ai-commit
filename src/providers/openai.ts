@@ -1,4 +1,4 @@
-import { BaseProvider, ProviderConfig, ProviderError } from './base';
+import { BaseProvider, ProviderConfig, ProviderError, GenerateOptions } from './base';
 
 export class OpenAIProvider extends BaseProvider {
     readonly name = 'openai';
@@ -8,17 +8,18 @@ export class OpenAIProvider extends BaseProvider {
         super({
             ...config,
             baseUrl: config.baseUrl || 'https://api.openai.com/v1',
-            model: config.model || 'gpt-4o',
             temperature: config.temperature ?? 0.7,
             maxTokens: config.maxTokens ?? 500
         });
     }
     
-    async generate(prompt: string): Promise<string> {
+    async generate(prompt: string, options?: GenerateOptions): Promise<string> {
         this.validateApiKey();
+        this.validateModel();
         
         const response = await fetch(`${this.config.baseUrl}/chat/completions`, {
             method: 'POST',
+            signal: options?.signal,
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${this.config.apiKey}`

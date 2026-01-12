@@ -1,4 +1,4 @@
-import { BaseProvider, ProviderConfig, ProviderError } from './base';
+import { BaseProvider, ProviderConfig, ProviderError, GenerateOptions } from './base';
 
 export class ClaudeProvider extends BaseProvider {
     readonly name = 'claude';
@@ -8,17 +8,18 @@ export class ClaudeProvider extends BaseProvider {
         super({
             ...config,
             baseUrl: config.baseUrl || 'https://api.anthropic.com',
-            model: config.model || 'claude-3-5-sonnet-20241022',
             temperature: config.temperature ?? 0.7,
             maxTokens: config.maxTokens ?? 500
         });
     }
     
-    async generate(prompt: string): Promise<string> {
+    async generate(prompt: string, options?: GenerateOptions): Promise<string> {
         this.validateApiKey();
+        this.validateModel();
         
         const response = await fetch(`${this.config.baseUrl}/v1/messages`, {
             method: 'POST',
+            signal: options?.signal,
             headers: {
                 'Content-Type': 'application/json',
                 'x-api-key': this.config.apiKey!,

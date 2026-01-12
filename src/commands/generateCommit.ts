@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import { ProviderRouter } from '../providers';
 import { PromptEngine } from '../prompt';
 import { GitDiff } from '../git';
+import { ProviderError } from '../providers/base';
+import { getOutputChannel, logDebug, logError, logInfo } from '../utils/log';
 
 /**
  * Main command: Generate commit message
@@ -13,9 +15,17 @@ export async function generateCommitMessage(context: vscode.ExtensionContext): P
             {
                 location: vscode.ProgressLocation.Notification,
                 title: 'Generating commit message...',
-                cancellable: false
+                cancellable: true
             },
-            async () => {
+            async (_progress, token) => {
+                const output = getOutputChannel();
+                const abortController = new AbortController();
+
+                token.onCancellationRequested(() => {
+                    abortController.abort();
+                    logInfo('Generation cancelled by user.');
+                });
+
                 const repo = await getActiveRepository();
                 const git = new GitDiff(repo.rootUri.fsPath);
 
@@ -27,30 +37,93 @@ export async function generateCommitMessage(context: vscode.ExtensionContext): P
                 const diff = await git.getStagedDiff();
                 const files = await git.getStagedFiles();
                 const branch = await git.getCurrentBranch();
-                
-                // Build prompt
+
+                logInfo(`Repo: ${repo.rootUri.fsPath}`);
+                logInfo(`Branch: ${branch}`);
+                logInfo(`Files: ${files.length}`);
+
                 const promptEngine = new PromptEngine();
                 const prompt = await promptEngine.buildPrompt({ diff, files, branch });
-                
-                // Get provider and generate
+
                 const router = new ProviderRouter(context);
-                const provider = await router.getProvider();
-                
-                const message = await provider.generate(prompt);
-                
-                if (!message) {
-                    vscode.window.showErrorMessage('Failed to generate commit message: empty response');
-                    return;
+                let provider = await router.getProvider();
+
+                logInfo(`Provider: ${provider.displayName}`);
+                logInfo(`Prompt length: ${prompt.length}`);
+                logDebug('Prompt:\n' + prompt);
+
+                while (true) {
+                    if (token.isCancellationRequested) {
+                        return;
+                    }
+
+                    try {
+                        const message = await provider.generate(prompt, { signal: abortController.signal });
+
+                        if (!message) {
+                            throw new Error('Empty response');
+                        }
+
+                        repo.inputBox.value = message;
+                        logInfo(`Generated message: ${message.replace(/\s+/g, ' ').trim()}`);
+                        vscode.window.showInformationMessage(`Commit message generated using ${provider.displayName}`);
+                        return;
+                    } catch (error) {
+                        if (token.isCancellationRequested) {
+                            return;
+                        }
+
+                        if (abortController.signal.aborted) {
+                            return;
+                        }
+
+                        const errorMessage = error instanceof Error ? error.message : String(error);
+                        logError(errorMessage);
+                        output.show(true);
+
+                        const actions = ['Retry', 'Show Logs', 'Set API Key', 'Switch Provider'] as const;
+                        const picked = await vscode.window.showErrorMessage(
+                            `Failed to generate commit message: ${errorMessage}`,
+                            ...actions
+                        );
+
+                        if (picked === 'Retry') {
+                            continue;
+                        }
+
+                        if (picked === 'Show Logs') {
+                            output.show(true);
+                            continue;
+                        }
+
+                        if (picked === 'Set API Key') {
+                            await vscode.commands.executeCommand('gitMessage.setApiKey');
+                            provider = await router.getProvider();
+                            logInfo(`Provider reloaded: ${provider.displayName}`);
+                            continue;
+                        }
+
+                        if (picked === 'Switch Provider') {
+                            await vscode.commands.executeCommand('gitMessage.switchProvider');
+                            provider = await router.getProvider();
+                            logInfo(`Provider switched to: ${provider.displayName}`);
+                            continue;
+                        }
+
+                        return;
+                    }
                 }
-                
-                // Set the commit message in SCM input box
-                repo.inputBox.value = message;
-                
-                vscode.window.showInformationMessage(`Commit message generated using ${provider.displayName}`);
             }
         );
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
+        logError(errorMessage);
+
+        if (error instanceof ProviderError) {
+            vscode.window.showErrorMessage(error.message);
+            return;
+        }
+
         vscode.window.showErrorMessage(`Failed to generate commit message: ${errorMessage}`);
     }
 }

@@ -1,4 +1,4 @@
-import { BaseProvider, ProviderConfig, ProviderError } from './base';
+import { BaseProvider, ProviderConfig, ProviderError, GenerateOptions } from './base';
 
 /**
  * Custom provider for any OpenAI-compatible API
@@ -16,7 +16,7 @@ export class CustomProvider extends BaseProvider {
         });
     }
     
-    async generate(prompt: string): Promise<string> {
+    async generate(prompt: string, options?: GenerateOptions): Promise<string> {
         if (!this.config.baseUrl) {
             throw new ProviderError(this.name, 'Base URL is not configured. Set gitMessage.providers.custom.baseUrl in settings.');
         }
@@ -36,6 +36,7 @@ export class CustomProvider extends BaseProvider {
         
         const response = await fetch(`${this.config.baseUrl}/chat/completions`, {
             method: 'POST',
+            signal: options?.signal,
             headers,
             body: JSON.stringify({
                 model: this.config.model,

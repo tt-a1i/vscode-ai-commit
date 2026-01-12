@@ -59,19 +59,9 @@ export class ProviderRouter {
         
         return {
             apiKey,
-            model: providerConfig['model'] || this.getDefaultModel(type),
+            model: providerConfig['model'] || '',
             baseUrl: providerConfig['baseUrl'],
         };
-    }
-    
-    private getDefaultModel(type: ProviderType): string {
-        const defaults: Record<ProviderType, string> = {
-            openai: 'gpt-4o',
-            claude: 'claude-3-5-sonnet-20241022',
-            gemini: 'gemini-pro',
-            custom: ''
-        };
-        return defaults[type];
     }
     
     /**
