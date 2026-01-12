@@ -1,0 +1,1 @@
+export { GitDiff } from './diff';

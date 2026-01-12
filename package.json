@@ -1,0 +1,160 @@
+{
+  "name": "git-message-generator",
+  "displayName": "Git Message Generator",
+  "description": "AI-powered commit message generator with custom prompts and multi-model support",
+  "version": "0.0.1",
+  "publisher": "git-message",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "SCM Providers",
+    "Other"
+  ],
+  "keywords": [
+    "git",
+    "commit",
+    "message",
+    "ai",
+    "openai",
+    "claude",
+    "gemini",
+    "conventional-commits"
+  ],
+  "activationEvents": [
+    "onCommand:gitMessage.generate",
+    "onCommand:gitMessage.setApiKey",
+    "onCommand:gitMessage.switchProvider",
+    "onCommand:gitMessage.switchLanguage"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "gitMessage.generate",
+        "title": "Generate Commit Message",
+        "icon": "$(sparkle)",
+        "category": "Git Message"
+      },
+      {
+        "command": "gitMessage.setApiKey",
+        "title": "Set API Key",
+        "category": "Git Message"
+      },
+      {
+        "command": "gitMessage.switchProvider",
+        "title": "Switch AI Provider",
+        "category": "Git Message"
+      },
+      {
+        "command": "gitMessage.switchLanguage",
+        "title": "Switch Language",
+        "category": "Git Message"
+      }
+    ],
+    "menus": {
+      "scm/title": [
+        {
+          "command": "gitMessage.generate",
+          "group": "navigation",
+          "when": "scmProvider == git"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Git Message Generator",
+      "properties": {
+        "gitMessage.defaultProvider": {
+          "type": "string",
+          "default": "openai",
+          "enum": ["openai", "claude", "gemini", "custom"],
+          "enumDescriptions": [
+            "OpenAI (GPT-4o, GPT-4, GPT-3.5)",
+            "Anthropic Claude (Claude 3.5 Sonnet)",
+            "Google Gemini (Gemini Pro, Flash)",
+            "Custom OpenAI-compatible API"
+          ],
+          "description": "Default AI provider for generating commit messages"
+        },
+        "gitMessage.language": {
+          "type": "string",
+          "default": "en",
+          "enum": ["en", "zh-CN", "zh-TW", "ja", "ko"],
+          "enumDescriptions": [
+            "English",
+            "简体中文",
+            "繁體中文",
+            "日本語",
+            "한국어"
+          ],
+          "description": "Language for generated commit messages"
+        },
+        "gitMessage.customPrompt": {
+          "type": "string",
+          "default": "",
+          "description": "Custom prompt template. Use {{diff}}, {{files}}, {{branch}}, {{commitlint_rules}}, {{language}} as placeholders"
+        },
+        "gitMessage.providers.openai.model": {
+          "type": "string",
+          "default": "gpt-4o",
+          "description": "OpenAI model to use"
+        },
+        "gitMessage.providers.openai.baseUrl": {
+          "type": "string",
+          "default": "https://api.openai.com/v1",
+          "description": "OpenAI API base URL"
+        },
+        "gitMessage.providers.claude.model": {
+          "type": "string",
+          "default": "claude-3-5-sonnet-20241022",
+          "description": "Claude model to use"
+        },
+        "gitMessage.providers.gemini.model": {
+          "type": "string",
+          "default": "gemini-pro",
+          "description": "Gemini model to use"
+        },
+        "gitMessage.providers.custom.model": {
+          "type": "string",
+          "default": "",
+          "description": "Custom API model name"
+        },
+        "gitMessage.providers.custom.baseUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Custom API base URL (OpenAI-compatible)"
+        },
+        "gitMessage.maxDiffLength": {
+          "type": "number",
+          "default": 4000,
+          "description": "Maximum diff length to include in prompt (characters)"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.x",
+    "@types/vscode": "^1.85.0",
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.6",
+    "@typescript-eslint/eslint-plugin": "^6.x",
+    "@typescript-eslint/parser": "^6.x",
+    "@vscode/test-cli": "^0.0.4",
+    "@vscode/test-electron": "^2.3.8",
+    "eslint": "^8.x",
+    "glob": "^8.1.0",
+    "mocha": "^10.2.0",
+    "typescript": "^5.3.x"
+  },
+  "dependencies": {
+    "yaml": "^2.3.4"
+  }
+}
