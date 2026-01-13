@@ -26,6 +26,8 @@ AI-powered commit message generator for VS Code with custom prompts and multi-mo
 - `gitMessage.custom.apiKey`: API key (required)
 - `gitMessage.language`: Output language (en/zh-CN/zh-TW/ja/ko)
 - `gitMessage.customPrompt`: Custom prompt template
+- `gitMessage.enableHeuristics`: Suggest `type`/`scope` from staged file paths
+- `gitMessage.smartDiffTrim`: Prefer semantic diff trimming when large
 - `gitMessage.debug`: Enable debug logging (Output: "Git Message Generator")
 - `gitMessage.debugLogPrompt`: Log full prompt content (may include sensitive code)
 

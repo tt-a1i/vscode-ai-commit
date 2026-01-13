@@ -1,6 +1,8 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { readOpenAICompatibleStream } from '../../utils/openaiStream';
+import { inferScope, inferType } from '../../utils/commitHeuristics';
+import { trimDiffSmart } from '../../utils/diffTrim';
 
 suite('Extension Test Suite', () => {
     vscode.window.showInformationMessage('Start all tests.');
@@ -41,5 +43,37 @@ suite('Extension Test Suite', () => {
         const result = await readOpenAICompatibleStream(stream, (t) => { seen += t; });
         assert.strictEqual(result, 'feat: add streaming');
         assert.strictEqual(seen, 'feat: add streaming');
+    });
+
+    test('inferType returns docs for docs-only changes', () => {
+        assert.strictEqual(inferType(['README.md', 'docs/usage.md']), 'docs');
+    });
+
+    test('inferScope returns package name for monorepo paths', () => {
+        assert.strictEqual(inferScope(['packages/auth/src/index.ts', 'packages/auth/README.md']), 'auth');
+    });
+
+    test('inferScope respects commitlint scope casing when provided', () => {
+        assert.strictEqual(inferScope(['packages/auth/src/index.ts'], ['Auth', 'Core']), 'Auth');
+    });
+
+    test('trimDiffSmart reduces very large diffs', () => {
+        const big = [
+            'diff --git a/src/a.ts b/src/a.ts',
+            'index 000..111 100644',
+            '--- a/src/a.ts',
+            '+++ b/src/a.ts',
+            '@@ -1,1 +1,10 @@',
+            '+export function foo() {',
+            '+  // comment',
+            '+  return 1;',
+            '+}',
+            '+'.repeat(5000)
+        ].join('\\n');
+
+        const out = trimDiffSmart(big, 500);
+        assert.ok(out.trimmed);
+        assert.ok(out.text.length <= 560);
+        assert.ok(out.text.includes('export function foo'));
     });
 });

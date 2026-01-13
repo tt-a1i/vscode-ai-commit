@@ -108,6 +108,18 @@
           "default": 4000,
           "markdownDescription": "Maximum diff length to include in prompt (characters)"
         },
+        "gitMessage.enableHeuristics": {
+          "order": 12,
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Suggest Conventional Commit `type`/`scope` based on staged file paths"
+        },
+        "gitMessage.smartDiffTrim": {
+          "order": 13,
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "When diff is large, prefer trimming to key lines (signatures/comments) instead of hard truncation"
+        },
         "gitMessage.debug": {
           "order": 100,
           "type": "boolean",

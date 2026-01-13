@@ -24,6 +24,20 @@ export const DEFAULT_PROMPT = `You are a professional Git commit message generat
 ## Task
 Generate a commit message based on the changes above.
 
+{{#if suggested_type}}
+## Suggestions (optional)
+- Suggested type: {{suggested_type}}
+{{#if suggested_scope}}
+- Suggested scope: {{suggested_scope}}
+{{/if}}
+{{/if}}
+
+## Examples (header only)
+- feat(auth): add token refresh on 401
+- fix(api): handle null response from upstream
+- docs(readme): document setup and test commands
+- ci: run lint and tests on pull requests
+
 Requirements:
 - Use Conventional Commits format: <type>[optional scope]: <description>
 - Available types: feat, fix, docs, style, refactor, perf, test, build, ci, chore
