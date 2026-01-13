@@ -1,8 +1,7 @@
 import * as vscode from 'vscode';
-import { ProviderRouter } from '../providers';
+import { createProvider, isProviderConfigured, ProviderError } from '../providers';
 import { PromptEngine } from '../prompt';
 import { GitDiff } from '../git';
-import { ProviderError } from '../providers/base';
 import { getOutputChannel, logDebug, logError, logInfo } from '../utils/log';
 
 /**
@@ -42,13 +41,25 @@ export async function generateCommitMessage(context: vscode.ExtensionContext): P
                 logInfo(`Branch: ${branch}`);
                 logInfo(`Files: ${files.length}`);
 
+                // Check if provider config is configured
+                if (!isProviderConfigured()) {
+                    const action = await vscode.window.showWarningMessage(
+                        'Custom endpoint is not fully configured. Please set baseUrl, model, and apiKey in settings.',
+                        'Open Settings'
+                    );
+
+                    if (action === 'Open Settings') {
+                        await vscode.commands.executeCommand('workbench.action.openSettings', 'gitMessage.custom');
+                    }
+                    return;
+                }
+
                 const promptEngine = new PromptEngine();
                 const prompt = await promptEngine.buildPrompt({ diff, files, branch });
 
-                const router = new ProviderRouter(context);
-                let provider = await router.getProvider();
+                let provider = createProvider();
 
-                logInfo(`Provider: ${provider.displayName}`);
+                logInfo(`Model: ${vscode.workspace.getConfiguration('gitMessage').get('custom.model')}`);
                 logInfo(`Prompt length: ${prompt.length}`);
                 logDebug('Prompt:\n' + prompt);
 
@@ -66,7 +77,7 @@ export async function generateCommitMessage(context: vscode.ExtensionContext): P
 
                         repo.inputBox.value = message;
                         logInfo(`Generated message: ${message.replace(/\s+/g, ' ').trim()}`);
-                        vscode.window.showInformationMessage(`Commit message generated using ${provider.displayName}`);
+                        vscode.window.showInformationMessage('Commit message generated!');
                         return;
                     } catch (error) {
                         if (token.isCancellationRequested) {
@@ -81,32 +92,24 @@ export async function generateCommitMessage(context: vscode.ExtensionContext): P
                         logError(errorMessage);
                         output.show(true);
 
-                        const actions = ['Retry', 'Show Logs', 'Set API Key', 'Switch Provider'] as const;
+                        const actions = ['Retry', 'Open Settings', 'Show Logs'] as const;
                         const picked = await vscode.window.showErrorMessage(
-                            `Failed to generate commit message: ${errorMessage}`,
+                            `Failed to generate: ${errorMessage}`,
                             ...actions
                         );
 
                         if (picked === 'Retry') {
+                            provider = createProvider();
+                            continue;
+                        }
+
+                        if (picked === 'Open Settings') {
+                            await vscode.commands.executeCommand('workbench.action.openSettings', 'gitMessage');
                             continue;
                         }
 
                         if (picked === 'Show Logs') {
                             output.show(true);
-                            continue;
-                        }
-
-                        if (picked === 'Set API Key') {
-                            await vscode.commands.executeCommand('gitMessage.setApiKey');
-                            provider = await router.getProvider();
-                            logInfo(`Provider reloaded: ${provider.displayName}`);
-                            continue;
-                        }
-
-                        if (picked === 'Switch Provider') {
-                            await vscode.commands.executeCommand('gitMessage.switchProvider');
-                            provider = await router.getProvider();
-                            logInfo(`Provider switched to: ${provider.displayName}`);
                             continue;
                         }
 

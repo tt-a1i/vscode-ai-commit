@@ -18,17 +18,13 @@ AI-powered commit message generator for VS Code with custom prompts and multi-mo
 
 ## Configuration
 
-### Set API Key
-
-Run command: `Git Message: Set API Key`
-
 ### Settings
 
-- `gitMessage.defaultProvider`: Choose AI provider (openai/claude/gemini/custom)
+- `gitMessage.custom.baseUrl`: Custom OpenAI-compatible endpoint base URL (required)
+- `gitMessage.custom.model`: Model name (required)
+- `gitMessage.custom.apiKey`: API key (required)
 - `gitMessage.language`: Output language (en/zh-CN/zh-TW/ja/ko)
 - `gitMessage.customPrompt`: Custom prompt template
-- `gitMessage.providers.<provider>.model`: Model name (required; no default)
-- `gitMessage.providers.<provider>.baseUrl`: Provider API base URL (optional; override for proxies/ports)
 - `gitMessage.debug`: Enable debug logging (Output: "Git Message Generator")
 - `gitMessage.debugLogPrompt`: Log full prompt content (may include sensitive code)
 

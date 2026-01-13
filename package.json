@@ -7,6 +7,12 @@
   "engines": {
     "vscode": "^1.85.0"
   },
+  "icon": "icon.png",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tt-a1i/vscode-ai-commit"
+  },
   "categories": [
     "SCM Providers",
     "Other"
@@ -23,9 +29,7 @@
   ],
   "activationEvents": [
     "onCommand:gitMessage.generate",
-    "onCommand:gitMessage.setApiKey",
-    "onCommand:gitMessage.switchProvider",
-    "onCommand:gitMessage.switchLanguage"
+    "onCommand:gitMessage.openSettings"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -37,18 +41,8 @@
         "category": "Git Message"
       },
       {
-        "command": "gitMessage.setApiKey",
-        "title": "Set API Key",
-        "category": "Git Message"
-      },
-      {
-        "command": "gitMessage.switchProvider",
-        "title": "Switch AI Provider",
-        "category": "Git Message"
-      },
-      {
-        "command": "gitMessage.switchLanguage",
-        "title": "Switch Language",
+        "command": "gitMessage.openSettings",
+        "title": "Open Settings",
         "category": "Git Message"
       }
     ],
@@ -64,22 +58,35 @@
     "configuration": {
       "title": "Git Message Generator",
       "properties": {
-        "gitMessage.defaultProvider": {
+        "gitMessage.custom.apiKey": {
+          "order": 1,
           "type": "string",
-          "default": "openai",
-          "enum": ["openai", "claude", "gemini", "custom"],
-          "enumDescriptions": [
-            "OpenAI (GPT-4o, GPT-4, GPT-3.5)",
-            "Anthropic Claude (Claude 3.5 Sonnet)",
-            "Google Gemini (Gemini Pro, Flash)",
-            "Custom OpenAI-compatible API"
-          ],
-          "description": "Default AI provider for generating commit messages"
+          "default": "",
+          "markdownDescription": "**API Key** for your custom OpenAI-compatible endpoint"
+        },
+        "gitMessage.custom.model": {
+          "order": 2,
+          "type": "string",
+          "default": "",
+          "markdownDescription": "**Model name** (required)"
+        },
+        "gitMessage.custom.baseUrl": {
+          "order": 3,
+          "type": "string",
+          "default": "",
+          "markdownDescription": "**API Endpoint (baseUrl)** (required). Example: `https://api.openai.com/v1` or `http://localhost:11434/v1`"
         },
         "gitMessage.language": {
+          "order": 4,
           "type": "string",
           "default": "en",
-          "enum": ["en", "zh-CN", "zh-TW", "ja", "ko"],
+          "enum": [
+            "en",
+            "zh-CN",
+            "zh-TW",
+            "ja",
+            "ko"
+          ],
           "enumDescriptions": [
             "English",
             "简体中文",
@@ -87,67 +94,31 @@
             "日本語",
             "한국어"
           ],
-          "description": "Language for generated commit messages"
+          "markdownDescription": "Language for generated commit messages"
         },
         "gitMessage.customPrompt": {
+          "order": 10,
           "type": "string",
           "default": "",
-          "description": "Custom prompt template. Use {{diff}}, {{files}}, {{branch}}, {{commitlint_rules}}, {{language}} as placeholders"
-        },
-        "gitMessage.providers.openai.model": {
-          "type": "string",
-          "default": "",
-          "description": "OpenAI model to use (required)"
-        },
-        "gitMessage.providers.openai.baseUrl": {
-          "type": "string",
-          "default": "https://api.openai.com/v1",
-          "description": "OpenAI API base URL"
-        },
-        "gitMessage.providers.claude.model": {
-          "type": "string",
-          "default": "",
-          "description": "Claude model to use (required)"
-        },
-        "gitMessage.providers.claude.baseUrl": {
-          "type": "string",
-          "default": "https://api.anthropic.com",
-          "description": "Claude API base URL"
-        },
-        "gitMessage.providers.gemini.model": {
-          "type": "string",
-          "default": "",
-          "description": "Gemini model to use (required)"
-        },
-        "gitMessage.providers.gemini.baseUrl": {
-          "type": "string",
-          "default": "https://generativelanguage.googleapis.com/v1beta",
-          "description": "Gemini API base URL"
-        },
-        "gitMessage.providers.custom.model": {
-          "type": "string",
-          "default": "",
-          "description": "Custom API model name"
-        },
-        "gitMessage.providers.custom.baseUrl": {
-          "type": "string",
-          "default": "",
-          "description": "Custom API base URL (OpenAI-compatible)"
+          "markdownDescription": "Custom prompt template. Variables: `{{diff}}`, `{{files}}`, `{{branch}}`, `{{commitlint_rules}}`, `{{language}}`"
         },
         "gitMessage.maxDiffLength": {
+          "order": 11,
           "type": "number",
           "default": 4000,
-          "description": "Maximum diff length to include in prompt (characters)"
+          "markdownDescription": "Maximum diff length to include in prompt (characters)"
         },
         "gitMessage.debug": {
+          "order": 100,
           "type": "boolean",
           "default": false,
-          "description": "Enable debug logging to the Git Message Generator output channel"
+          "markdownDescription": "Enable debug logging to Output channel"
         },
         "gitMessage.debugLogPrompt": {
+          "order": 101,
           "type": "boolean",
           "default": false,
-          "description": "Log full prompt content in debug mode (may include sensitive code)"
+          "markdownDescription": "Log full prompt content (may include sensitive code)"
         }
       }
     }
