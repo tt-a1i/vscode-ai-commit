@@ -3,6 +3,7 @@ import { createProvider, isProviderConfigured, ProviderError } from '../provider
 import { PromptEngine } from '../prompt';
 import { GitDiff } from '../git';
 import { getOutputChannel, logDebug, logError, logInfo } from '../utils/log';
+import { formatProviderErrorMessage, getSafeHostFromBaseUrl } from '../utils/httpErrors';
 
 /**
  * Main command: Generate commit message
@@ -58,8 +59,10 @@ export async function generateCommitMessage(context: vscode.ExtensionContext): P
                 const prompt = await promptEngine.buildPrompt({ diff, files, branch });
 
                 let provider = createProvider();
+                const getBaseUrl = () => vscode.workspace.getConfiguration('gitMessage').get<string>('custom.baseUrl', '');
 
                 logInfo(`Model: ${vscode.workspace.getConfiguration('gitMessage').get('custom.model')}`);
+                logInfo(`Endpoint host: ${getSafeHostFromBaseUrl(getBaseUrl())}`);
                 logInfo(`Prompt length: ${prompt.length}`);
                 logDebug('Prompt:\n' + prompt);
 
@@ -69,6 +72,7 @@ export async function generateCommitMessage(context: vscode.ExtensionContext): P
                     }
 
                     try {
+                        const baseUrl = getBaseUrl();
                         const message = await provider.generate(prompt, { signal: abortController.signal });
 
                         if (!message) {
@@ -88,13 +92,14 @@ export async function generateCommitMessage(context: vscode.ExtensionContext): P
                             return;
                         }
 
-                        const errorMessage = error instanceof Error ? error.message : String(error);
-                        logError(errorMessage);
+                        const baseUrl = getBaseUrl();
+                        const { userMessage, logMessage } = formatProviderErrorMessage(error, baseUrl);
+                        logError(logMessage);
                         output.show(true);
 
                         const actions = ['Retry', 'Open Settings', 'Show Logs'] as const;
                         const picked = await vscode.window.showErrorMessage(
-                            `Failed to generate: ${errorMessage}`,
+                            userMessage,
                             ...actions
                         );
 
@@ -104,7 +109,7 @@ export async function generateCommitMessage(context: vscode.ExtensionContext): P
                         }
 
                         if (picked === 'Open Settings') {
-                            await vscode.commands.executeCommand('workbench.action.openSettings', 'gitMessage');
+                            await vscode.commands.executeCommand('workbench.action.openSettings', 'gitMessage.custom');
                             continue;
                         }
 
