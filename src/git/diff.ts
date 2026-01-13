@@ -26,12 +26,27 @@ export class GitDiff {
     async getStagedDiff(): Promise<string> {
         return this.exec('git diff --cached');
     }
+
+    /**
+     * Get the unstaged diff (working tree changes)
+     */
+    async getUnstagedDiff(): Promise<string> {
+        return this.exec('git diff');
+    }
     
     /**
      * Get list of staged files
      */
     async getStagedFiles(): Promise<string[]> {
         const output = await this.exec('git diff --cached --name-only');
+        return output.trim().split('\n').filter(f => f.length > 0);
+    }
+
+    /**
+     * Get list of unstaged files
+     */
+    async getUnstagedFiles(): Promise<string[]> {
+        const output = await this.exec('git diff --name-only');
         return output.trim().split('\n').filter(f => f.length > 0);
     }
     
@@ -51,6 +66,14 @@ export class GitDiff {
      */
     async hasStagedChanges(): Promise<boolean> {
         const files = await this.getStagedFiles();
+        return files.length > 0;
+    }
+
+    /**
+     * Check if there are unstaged changes
+     */
+    async hasUnstagedChanges(): Promise<boolean> {
+        const files = await this.getUnstagedFiles();
         return files.length > 0;
     }
     

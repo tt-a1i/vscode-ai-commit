@@ -2,7 +2,7 @@
   "name": "git-message-generator",
   "displayName": "AI Commit - Smart Message Generator",
   "description": "AI-powered commit message generator with streaming output, smart diff trimming, and Conventional Commits support",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "git-message",
   "engines": {
     "vscode": "^1.85.0"

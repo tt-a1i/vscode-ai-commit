@@ -1,9 +1,14 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import * as cp from 'child_process';
 import { readOpenAICompatibleStream } from '../../utils/openaiStream';
 import { inferScope, inferType } from '../../utils/commitHeuristics';
 import { trimDiffSmart } from '../../utils/diffTrim';
 import { normalizeCommitMessage } from '../../utils/commitMessage';
+import { GitDiff } from '../../git';
 
 suite('Extension Test Suite', () => {
     vscode.window.showInformationMessage('Start all tests.');
@@ -81,5 +86,27 @@ suite('Extension Test Suite', () => {
     test('normalizeCommitMessage enforces headerOnly', () => {
         const raw = `Commit message: feat(api): add x\n\nDetails here\n`;
         assert.strictEqual(normalizeCommitMessage(raw, { headerOnly: true }), 'feat(api): add x');
+    });
+
+    test('GitDiff detects staged vs unstaged', async () => {
+        const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'git-message-gitdiff-'));
+        try {
+            cp.execSync('git init', { cwd: dir, stdio: 'ignore' });
+            fs.writeFileSync(path.join(dir, 'a.txt'), 'one\n', 'utf8');
+            cp.execSync('git add a.txt', { cwd: dir, stdio: 'ignore' });
+
+            const git = new GitDiff(dir);
+            assert.strictEqual(await git.hasStagedChanges(), true);
+            assert.strictEqual(await git.hasUnstagedChanges(), false);
+
+            fs.writeFileSync(path.join(dir, 'a.txt'), 'two\n', 'utf8');
+            assert.strictEqual(await git.hasStagedChanges(), true);
+            assert.strictEqual(await git.hasUnstagedChanges(), true);
+
+            const unstagedFiles = await git.getUnstagedFiles();
+            assert.ok(unstagedFiles.includes('a.txt'));
+        } finally {
+            fs.rmSync(dir, { recursive: true, force: true });
+        }
     });
 });

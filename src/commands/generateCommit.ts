@@ -30,18 +30,40 @@ export async function generateCommitMessage(context: vscode.ExtensionContext): P
                 const repo = await getActiveRepository();
                 const git = new GitDiff(repo.rootUri.fsPath);
 
-                if (!(await git.hasStagedChanges())) {
-                    vscode.window.showWarningMessage('No staged changes. Please stage some files first.');
+                const hasStaged = await git.hasStagedChanges();
+                const hasUnstaged = await git.hasUnstagedChanges();
+
+                if (!hasStaged && !hasUnstaged) {
+                    vscode.window.showWarningMessage('No changes found. Make some changes first.');
                     return;
                 }
 
-                const diff = await git.getStagedDiff();
-                const files = await git.getStagedFiles();
+                let source: 'staged' | 'unstaged';
+                if (hasStaged && hasUnstaged) {
+                    const picked = await vscode.window.showWarningMessage(
+                        'You have both staged and unstaged changes. Choose one to generate the commit message from.',
+                        { modal: false },
+                        'Use Staged',
+                        'Use Unstaged'
+                    );
+
+                    if (!picked) {
+                        return;
+                    }
+
+                    source = picked === 'Use Staged' ? 'staged' : 'unstaged';
+                } else {
+                    source = hasStaged ? 'staged' : 'unstaged';
+                }
+
+                const diff = source === 'staged' ? await git.getStagedDiff() : await git.getUnstagedDiff();
+                const files = source === 'staged' ? await git.getStagedFiles() : await git.getUnstagedFiles();
                 const branch = await git.getCurrentBranch();
 
                 logInfo(`Repo: ${repo.rootUri.fsPath}`);
                 logInfo(`Branch: ${branch}`);
                 logInfo(`Files: ${files.length}`);
+                logInfo(`Diff source: ${source}`);
 
                 // Check if provider config is configured
                 if (!isProviderConfigured()) {
