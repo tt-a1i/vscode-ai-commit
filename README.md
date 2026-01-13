@@ -9,6 +9,7 @@ AI-powered commit message generator for VS Code with custom prompts and multi-mo
 - 📋 **Commitlint Integration**: Auto-adapts to your project's commitlint rules
 - 🌍 **Multi-language**: Generate messages in English, Chinese, Japanese, Korean
 - ⚡ **One-Click Generation**: Button in Source Control panel
+- ⌨️ **Streaming Output**: Writes into SCM input box as tokens arrive (if endpoint supports SSE)
 
 ## Usage
 

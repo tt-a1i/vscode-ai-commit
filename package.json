@@ -126,7 +126,7 @@
   "scripts": {
     "vscode:prepublish": "npm run bundle -- --production",
     "bundle": "node ./esbuild.mjs",
-    "compile-tests": "tsc -p ./tsconfig.test.json",
+    "compile-tests": "tsc -p ./",
     "watch": "npm run bundle -- --watch",
     "pretest": "npm run bundle -- --production && npm run compile-tests",
     "lint": "eslint src --ext ts",

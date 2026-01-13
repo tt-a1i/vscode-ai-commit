@@ -73,12 +73,42 @@ export async function generateCommitMessage(context: vscode.ExtensionContext): P
 
                     try {
                         const baseUrl = getBaseUrl();
-                        const message = await provider.generate(prompt, { signal: abortController.signal });
+
+                        repo.inputBox.value = '';
+                        let pending = '';
+                        let flushTimer: NodeJS.Timeout | undefined;
+
+                        const flush = () => {
+                            flushTimer = undefined;
+                            if (!pending) return;
+                            repo.inputBox.value = repo.inputBox.value + pending;
+                            pending = '';
+                        };
+
+                        let message = '';
+                        try {
+                            message = await provider.generate(prompt, {
+                                signal: abortController.signal,
+                                onToken: (text) => {
+                                    pending += text;
+                                    if (!flushTimer) {
+                                        flushTimer = setTimeout(flush, 60);
+                                    }
+                                }
+                            });
+                        } finally {
+                            if (flushTimer) {
+                                clearTimeout(flushTimer);
+                                flushTimer = undefined;
+                            }
+                            flush();
+                        }
 
                         if (!message) {
                             throw new Error('Empty response');
                         }
 
+                        // Ensure final output matches returned message (in case of non-stream fallback)
                         repo.inputBox.value = message;
                         logInfo(`Generated message: ${message.replace(/\s+/g, ' ').trim()}`);
                         vscode.window.showInformationMessage('Commit message generated!');

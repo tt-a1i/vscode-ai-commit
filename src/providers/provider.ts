@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { readOpenAICompatibleStream } from '../utils/openaiStream';
 
 /**
  * Configuration for the AI provider
@@ -7,6 +8,11 @@ export interface ProviderConfig {
     apiKey: string;
     model: string;
     baseUrl: string;
+}
+
+export interface GenerateOptions {
+    signal?: AbortSignal;
+    onToken?: (text: string) => void;
 }
 
 /**
@@ -31,7 +37,7 @@ export class AIProvider {
         this.config = config;
     }
     
-    async generate(prompt: string, options?: { signal?: AbortSignal }): Promise<string> {
+    async generate(prompt: string, options?: GenerateOptions): Promise<string> {
         if (!this.config.apiKey) {
             throw new ProviderError('API key is not configured. Set gitMessage.custom.apiKey in settings.');
         }
@@ -60,13 +66,22 @@ export class AIProvider {
                     }
                 ],
                 temperature: 0.7,
-                max_tokens: 500
+                max_tokens: 500,
+                stream: true
             })
         });
         
         if (!response.ok) {
             const error = await response.text();
             throw new ProviderError(`API error: ${error}`, response.status);
+        }
+
+        const contentType = response.headers.get('content-type') || '';
+        const isStream = contentType.includes('text/event-stream') || contentType.includes('application/x-ndjson');
+
+        if (isStream && response.body) {
+            const full = await readOpenAICompatibleStream(response.body, chunk => options?.onToken?.(chunk), options?.signal);
+            return full.trim();
         }
         
         const data = await response.json() as {

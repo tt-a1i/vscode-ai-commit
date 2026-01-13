@@ -6,7 +6,6 @@ out/**
 **/*.map
 .gitignore
 tsconfig.json
-tsconfig.test.json
 implementation_plan.md
 esbuild.mjs
 node_modules/**
