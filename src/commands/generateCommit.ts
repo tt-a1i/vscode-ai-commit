@@ -4,6 +4,7 @@ import { PromptEngine } from '../prompt';
 import { GitDiff } from '../git';
 import { getOutputChannel, logDebug, logError, logInfo } from '../utils/log';
 import { formatProviderErrorMessage, getSafeHostFromBaseUrl } from '../utils/httpErrors';
+import { normalizeCommitMessage } from '../utils/commitMessage';
 
 /**
  * Main command: Generate commit message
@@ -60,6 +61,8 @@ export async function generateCommitMessage(context: vscode.ExtensionContext): P
 
                 let provider = createProvider();
                 const getBaseUrl = () => vscode.workspace.getConfiguration('gitMessage').get<string>('custom.baseUrl', '');
+                const outputStyle = vscode.workspace.getConfiguration('gitMessage').get<string>('outputStyle', 'headerOnly');
+                const headerOnly = outputStyle === 'headerOnly';
 
                 logInfo(`Model: ${vscode.workspace.getConfiguration('gitMessage').get('custom.model')}`);
                 logInfo(`Endpoint host: ${getSafeHostFromBaseUrl(getBaseUrl())}`);
@@ -77,6 +80,7 @@ export async function generateCommitMessage(context: vscode.ExtensionContext): P
                         repo.inputBox.value = '';
                         let pending = '';
                         let flushTimer: NodeJS.Timeout | undefined;
+                        let sawNewline = false;
 
                         const flush = () => {
                             flushTimer = undefined;
@@ -90,6 +94,17 @@ export async function generateCommitMessage(context: vscode.ExtensionContext): P
                             message = await provider.generate(prompt, {
                                 signal: abortController.signal,
                                 onToken: (text) => {
+                                    if (headerOnly) {
+                                        const newlineIndex = text.search(/\r?\n/);
+                                        if (newlineIndex !== -1) {
+                                            const before = text.slice(0, newlineIndex);
+                                            if (before) pending += before;
+                                            sawNewline = true;
+                                            logDebug('Aborted stream at first newline (headerOnly mode)');
+                                            abortController.abort();
+                                            return;
+                                        }
+                                    }
                                     pending += text;
                                     if (!flushTimer) {
                                         flushTimer = setTimeout(flush, 60);
@@ -104,13 +119,23 @@ export async function generateCommitMessage(context: vscode.ExtensionContext): P
                             flush();
                         }
 
+                        // If we aborted after the first newline in header-only mode, treat it as success.
+                        if (headerOnly && sawNewline && abortController.signal.aborted) {
+                            const normalized = normalizeCommitMessage(repo.inputBox.value, { headerOnly: true });
+                            repo.inputBox.value = normalized;
+                            logInfo(`Generated message: ${normalized}`);
+                            vscode.window.showInformationMessage('Commit message generated!');
+                            return;
+                        }
+
                         if (!message) {
                             throw new Error('Empty response');
                         }
 
                         // Ensure final output matches returned message (in case of non-stream fallback)
-                        repo.inputBox.value = message;
-                        logInfo(`Generated message: ${message.replace(/\s+/g, ' ').trim()}`);
+                        const normalized = normalizeCommitMessage(message, { headerOnly });
+                        repo.inputBox.value = normalized;
+                        logInfo(`Generated message: ${normalized.replace(/\s+/g, ' ').trim()}`);
                         vscode.window.showInformationMessage('Commit message generated!');
                         return;
                     } catch (error) {
@@ -119,6 +144,15 @@ export async function generateCommitMessage(context: vscode.ExtensionContext): P
                         }
 
                         if (abortController.signal.aborted) {
+                            // In header-only mode we might abort to stop at first newline; if no content, just return.
+                            if (headerOnly) {
+                                const normalized = normalizeCommitMessage(repo.inputBox.value, { headerOnly: true });
+                                if (normalized) {
+                                    repo.inputBox.value = normalized;
+                                    logInfo(`Generated message: ${normalized}`);
+                                    vscode.window.showInformationMessage('Commit message generated!');
+                                }
+                            }
                             return;
                         }
 

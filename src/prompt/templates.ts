@@ -32,21 +32,40 @@ Generate a commit message based on the changes above.
 {{/if}}
 {{/if}}
 
+{{#if header_only}}
 ## Examples (header only)
 - feat(auth): add token refresh on 401
 - fix(api): handle null response from upstream
 - docs(readme): document setup and test commands
 - ci: run lint and tests on pull requests
+{{/if}}
+
+{{#if allow_body}}
+## Examples (header + body)
+feat(auth): add token refresh on 401
+
+Handle expired access tokens by attempting a refresh once.
+{{/if}}
 
 Requirements:
 - Use Conventional Commits format: <type>[optional scope]: <description>
 - Available types: feat, fix, docs, style, refactor, perf, test, build, ci, chore
 - Write the description in {{language}}
+{{#if header_only}}
 - Output ONLY ONE line (header only): no body, no footer
 - Keep it concise and clear (max 72 characters if possible)
+{{/if}}
+{{#if allow_body}}
+- Output a header line and optionally a short body (blank line between)
+{{/if}}
 - Focus on WHAT changed and WHY, not HOW
 
-Output ONLY the commit header line, no explanations, no markdown.`;
+{{#if header_only}}
+Output ONLY the commit header line, no explanations, no markdown.
+{{/if}}
+{{#if allow_body}}
+Output ONLY the commit message (header + optional body), no explanations, no markdown.
+{{/if}}`;
 
 /**
  * Language display names

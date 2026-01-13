@@ -120,6 +120,20 @@
           "default": true,
           "markdownDescription": "When diff is large, prefer trimming to key lines (signatures/comments) instead of hard truncation"
         },
+        "gitMessage.outputStyle": {
+          "order": 14,
+          "type": "string",
+          "default": "headerOnly",
+          "enum": [
+            "headerOnly",
+            "headerAndBody"
+          ],
+          "enumDescriptions": [
+            "Header only (single line)",
+            "Header + optional body"
+          ],
+          "markdownDescription": "Commit message output style"
+        },
         "gitMessage.debug": {
           "order": 100,
           "type": "boolean",

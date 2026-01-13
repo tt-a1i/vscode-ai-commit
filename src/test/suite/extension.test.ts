@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import { readOpenAICompatibleStream } from '../../utils/openaiStream';
 import { inferScope, inferType } from '../../utils/commitHeuristics';
 import { trimDiffSmart } from '../../utils/diffTrim';
+import { normalizeCommitMessage } from '../../utils/commitMessage';
 
 suite('Extension Test Suite', () => {
     vscode.window.showInformationMessage('Start all tests.');
@@ -75,5 +76,10 @@ suite('Extension Test Suite', () => {
         assert.ok(out.trimmed);
         assert.ok(out.text.length <= 560);
         assert.ok(out.text.includes('export function foo'));
+    });
+
+    test('normalizeCommitMessage enforces headerOnly', () => {
+        const raw = `Commit message: feat(api): add x\n\nDetails here\n`;
+        assert.strictEqual(normalizeCommitMessage(raw, { headerOnly: true }), 'feat(api): add x');
     });
 });
