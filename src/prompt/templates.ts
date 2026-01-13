@@ -28,11 +28,11 @@ Requirements:
 - Use Conventional Commits format: <type>[optional scope]: <description>
 - Available types: feat, fix, docs, style, refactor, perf, test, build, ci, chore
 - Write the description in {{language}}
-- Be concise and clear
+- Output ONLY ONE line (header only): no body, no footer
+- Keep it concise and clear (max 72 characters if possible)
 - Focus on WHAT changed and WHY, not HOW
-- Add a body with details if the change is complex
 
-Output ONLY the commit message, no explanations.`;
+Output ONLY the commit header line, no explanations, no markdown.`;
 
 /**
  * Language display names
